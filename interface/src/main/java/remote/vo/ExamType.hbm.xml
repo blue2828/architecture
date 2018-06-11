@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD 3.0//EN"
+        "http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd">
+<hibernate-mapping>
+    <class name="remote.vo.ExamType" table="examType" catalog="ssh_finalexam" lazy="false">
+        <id name="examType_id" type="java.lang.Integer">
+            <column name="examType_id" not-null="true"/>
+            <generator class="native"/>
+        </id>
+        <property name="type_examName" type="java.lang.String" unique="true">
+            <column name="type_examName" unique="true" length="100"/>
+        </property>
+        <set name="exams" table="exam_type" inverse="true" cascade="none" lazy="false">
+            <key column="examTypeId"/>
+            <many-to-many column="examId" class="remote.vo.Exam"/>
+        </set>
+    </class>
+</hibernate-mapping>

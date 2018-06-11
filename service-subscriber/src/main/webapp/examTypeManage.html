@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>考试类别管理</title>
+    <link rel="shortcut icon" href="images/stephy.ico"/>
+    <link rel="stylesheet" href="layui/css/layui.css" type="text/css" media="all">
+    <script type="text/javascript" src="js/jquery.min.js"></script>
+    <script type="text/javascript" src="layui/layui.js"></script>
+    <script type="text/javascript" src="js/publicSetup.js"></script>
+    <script type="text/javascript">
+        layui.use(['layer', 'table', 'jquery', 'form', 'laydate', 'element'], function () {
+            var layer = layui.layer, table = layui.table, $ = layui.jquery, form = layui.form, laydate = layui.laydate,
+                element = layui.element;
+            $.post('memberAction_getCMember', function (member) {
+                if (member.level != '系统管理员') {
+                    location.href = 'index.html';
+                }
+            }, 'json');
+            table.on("tool(examTypeTable)", function (obj) {
+                var event = obj.event;
+                var tr = obj.tr;
+                var that = tr.children().last().prev();
+                if (event == 'edit') layer.tips("请在这里编辑", that, {tips: 3, time: 1000});
+                else {
+                    layer.confirm("确定要删除吗?", {title: '系统提示'}, function (index) {
+                        $.post("examTypeAction_delExamType", {"delId": obj.data.examType_id}, function (result) {
+                            if (result.complete) {
+                                layer.msg("删除成功", {icon: 6, time: 1000});
+                                obj.del();
+                            } else layer.alert(result.errMsg, {icon: 5});
+                        }, 'json');
+                    });
+                }
+            });
+            table.on('edit(examTypeTable)', function (obj) {
+                $.post('examTypeAction_saveExamType', {
+                    "editId": obj.data.examType_id,
+                    "editName": obj.data.type_examName
+                }, function (result) {
+                    if (result.complete) {
+                        layer.msg("编辑成功", {icon: 6, time: 1000});
+                    } else {
+                        layer.msg("编辑失败,请重试", {icon: 5, time: 1000});
+                    }
+                }, 'json');
+            });
+            $('#addBtn').click(function () {
+                layer.open({
+                    type: 1,
+                    area: ['380px', '200px'],
+                    title: '添加类别',
+                    content: $('#fm2Frame'),
+                    success: function (layero, index) {
+                        form.on("submit(saveBtn)", function (data) {
+                            $.ajax({
+                                url: 'examTypeAction_saveExamType',
+                                async: true,
+                                dataType: 'json',
+                                data: data.field,
+                                success: function (result) {
+                                    if (result.complete) {
+                                        layer.msg("添加成功", {icon: 6, time: 1000});
+                                        table.reload("examTypeTable", {
+                                            url: 'examTypeAction_getAllInfo'
+                                        });
+                                        layer.close(index);
+                                        $("input[name='examType.type_examName']").val('');
+                                    } else layer.msg("添加失败,请重试", {icon: 5, time: 1000});
+                                }
+                            });
+                        });
+                    }
+                });
+            });
+            $("#delDulp").click(function () {
+                var checkStatus = table.checkStatus("examTypeTable");
+                var data = checkStatus.data;
+                if (data.length == 0) {
+                    layer.msg("请勾选需要删除的行", {icon: 5, time: 1200});
+                    return;
+                }
+                layer.confirm("确定要删除这些行吗?", {icon: 3, title: '系统提示'}, function (index) {
+                    var strIds = [];
+                    $.each(data, function (index, item) {
+                        strIds.push(item.examType_id);
+                    });
+                    var delId = strIds.join(",");
+                    $.post('examTypeAction_delExamType', {"delId": delId}, function (result) {
+                        if (result.complete) {
+                            layer.msg("删除成功", {icon: 6, time: 1200});
+                            table.reload("examTypeTable", {
+                                url: 'examTypeAction_getAllInfo'
+                            });
+                        } else {
+                            layer.alert(result.errMsg, {icon: 5});
+                        }
+                    }, 'json');
+                });
+            });
+            form.on("submit(searchBtn)", function (data) {
+                var data = data.field;
+                var reg = /^[\d|\s]*$/;
+                if (data.s_examType_id.match(reg)) {
+                    table.reload("examTypeTable", {
+                        url: 'examTypeAction_getAllInfo',
+                        where: {
+                            examType_id: data.s_examType_id,
+                            type_examName: data.s_examTypeName
+                        }
+                    });
+                } else {
+                    layer.alert("需要搜索的ID只能为数字");
+                    return;
+                }
+            });
+        });
+    </script>
+</head>
+<body>
+<div style="z-index:19831008;margin:5px;">
+    <div id="delDulpBtn" style="float:left;display:inline;margin-right: 4px;">&nbsp;<a href="javascript:void(0);"
+                                                                                       id="delDulp"
+                                                                                       class="layui-btn layui-btn-danger"><i
+            class="layui-icon">&#xe654;</i>批量删除</a></div>
+    <div id="addBtn" style="float:left;display:inline;margin-right: 10px;">&nbsp;<a href="javascript:void(0);" id="add"
+                                                                                    class="layui-btn layui-btn-normal"><i
+            class="layui-icon">&#xe654;</i>添加</a></div>
+    <form class="layui-form layui-form-pane" id="fm" lay-filter="fm">
+        <div class="layui-inline">
+            <div class="layui-input-inline">
+                <input class="layui-input" autocomplete="off" name="s_examType_id" placeholder="ID">
+            </div>
+        </div>
+        <div class="layui-inline">
+            <div class="layui-input-inline">
+                <input class="layui-input" autocomplete="off" name="s_examTypeName" placeholder="考试类别">
+            </div>
+        </div>
+        <div style="position:fixed;display:inline;">&nbsp;<a href="javascript:void(0);" id="search"
+                                                             class="layui-btn layui-btn-normal" lay-filter="searchBtn"
+                                                             lay-submit><i class="layui-icon">&#xe615;</i>搜索</a></div>
+    </form>
+</div>
+<div style="margin-top:2px;">
+    <table class="layui-table" lay-data="{height:400,url:'examTypeAction_getAllInfo',id:'examTypeTable',page:'true'}"
+           lay-filter="examTypeTable">
+        <tr>
+            <thead>
+            <th lay-data="{checkbox:true}"></th>
+            <th lay-data="{field:'examType_id',align:'center',width:200,sort:true}">ID</th>
+            <th lay-data="{field:'type_examName',edit:true,align:'center',width:300,sort:true}">考试类别</th>
+            <th lay-data="{field:'s',toolbar:'#tb',align:'center',width:200}">操作</th>
+            </thead>
+        </tr>
+    </table>
+</div>
+<div id="tb" style="display:none;">
+    <button type="button" class="layui-btn layui-btn-normal layui-btn-mini" lay-event="edit"><i class="layui-icon">&#xe642;</i><span>编辑</span>
+    </button>
+    <button type="button" class="layui-btn layui-btn-danger layui-btn-mini" lay-event="del"><i class="layui-icon">&#xe640;</i><span>删除</span>
+    </button>
+</div>
+<div id="fm2Frame" style="display:none;">
+    <form id="fm2" class="layui-form layui-form-pane">
+        <div class="layui-form layui-form-pane" style="margin-top:20px">
+            <label class="layui-form-label">考试类别</label>
+            <div class="layui-input-inline">
+                <input class="layui-input" name="examType.type_examName" autocomplete="off" lay-verify="required">
+            </div>
+        </div>
+        <div style="margin-left:40%;margin-top:10px;">
+            <a href="javascript:void(0);" class="layui-btn layui-btn-normal" lay-filter="saveBtn" lay-submit><i
+                    class="layui-icon">&#xe654;</i>添加</a>
+        </div>
+    </form>
+</div>
+</body>
+</html>

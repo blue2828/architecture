@@ -1,0 +1,8 @@
+<component name="ArtifactManager">
+  <artifact type="war" name="servicesubcriber:war">
+    <output-path>$PROJECT_DIR$/servicesubcriber/target</output-path>
+    <root id="archive" name="service-subcriber.war">
+      <element id="artifact" artifact-name="servicesubcriber:war exploded" />
+    </root>
+  </artifact>
+</component>

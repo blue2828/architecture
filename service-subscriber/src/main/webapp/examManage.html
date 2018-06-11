@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <link rel="shortcut icon" href="images/stephy.ico"/>
+    <link rel="stylesheet" href="layui/css/layui.css" type="text/css" media="all">
+    <script type="text/javascript" src="js/jquery.min.js"></script>
+    <script type="text/javascript" src="layui/layui.js"></script>
+    <script type="text/javascript" src="js/publicSetup.js"></script>
+    <script type="text/javascript">
+        layui.use(['layer', 'table', 'jquery', 'form', 'laydate', 'element'], function () {
+            var layer = layui.layer, table = layui.table, $ = layui.jquery, form = layui.form, laydate = layui.laydate,
+                element = layui.element;
+            $.post('memberAction_getCMember', function (member) {
+                if (member.level != '系统管理员') {
+                    location.href = 'index.html';
+                }
+            }, 'json');
+            $.post('examAction_getAllType', function (result) {
+                if (result != '' && result != undefined) {
+                    $.each(result.typeRows, function (index, item) {
+                        $("select[name='examTypeName']").append("<option value='" + item.type_examName + "'>" + item.type_examName + "</option >");
+                    });
+                    form.render('select', 'form2');
+                }
+            }, 'json');
+            laydate.render({
+                elem: '#s_beginTime',
+                type: 'datetime'
+            });
+            laydate.render({
+                elem: '#s_endTime',
+                type: 'datetime'
+            });
+            laydate.render({
+                elem: '#beginTime',
+                type: 'datetime'
+            });
+            laydate.render({
+                elem: '#endTime',
+                type: 'datetime'
+            });
+            form.on('submit(searchBtn)', function (data) {
+                var reg = /^[\d|\s]*$/;
+                if (data.field.s_exam_id.match(reg)) {
+                    table.reload('examTable', {
+                        url: 'examAction_getAllInfo',
+                        where: {
+                            s_exam_id: data.field.s_exam_id,
+                            s_examName: data.field.s_examName,
+                            s_examBeginTime: data.field.s_examBeginTime,
+                            s_examEndTime: data.field.s_examEndTime
+                        }
+                    });
+                } else {
+                    layer.alert("需要搜索的ID只能为数字");
+                    return;
+                }
+            });
+            var frameTitle = "";
+            var saveUrl = "";
+            var clearForm = function () {
+                $("input[name='exam.examName']").val('');
+                $("select[name='examTypeName']").val('');
+                $("input[name='exam.examBeginTime']").val('');
+                $("input[name='exam.examEndTime']").val('');
+                form.render("select", "form2");
+            };
+            var frame = function () {
+                var thisIndex = layer.open({
+                    content: $('#fm2'),
+                    type: 1,
+                    area: ['500px', '400px'],
+                    title: frameTitle,
+                    skin: 'layui-layer-lan',
+                    cancel: function () {
+                        clearForm();
+                    },
+                    success: function (layero, index) {
+                        form.on('submit(saveBtn)', function (data) {
+                            $.ajax({
+                                url: saveUrl,
+                                dataType: 'json',
+                                data: data.field,
+                                async: true,
+                                contentType: 'application/json',
+                                success: function (result) {
+                                    if (result.success) {
+                                        layer.msg("保存成功", {icon: 6, time: 1200});
+                                        table.reload("examTable", {
+                                            url: "examAction_getAllInfo"
+                                        });
+                                        layer.close(index);
+                                        clearForm();
+                                    } else {
+                                        layer.msg(result.errMsg, {icon: 5, time: 1200});
+                                    }
+                                }
+                            });
+                        });
+                    }
+                });
+            };
+            var editFlag = 0;
+            $('#add').click(function () {
+                if ($('#IDMd') != undefined) {
+                    $('#IDMd').remove();
+                    editFlag = 0;
+                }
+                frameTitle = "添加考试信息";
+                saveUrl = "examAction_saveExam";
+                frame();
+            });
+            table.on('tool(examTable)', function (obj) {
+                var event = obj.event;
+                var data = obj.data;
+                if (event == 'edit') {
+                    var thisId = data.exam_id;
+                    if (editFlag == 0) {
+                        $('#fm2').children().first().before(" <div id='IDMd' class=\"layui-form-item\" style=\"margin-top: 10px;\">\n" +
+                            "        <label class=\"layui-form-label\">ID</label>\n" +
+                            "        <div class=\"layui-input-inline\">\n" +
+                            "            <input class=\"layui-input layui-disabled\" readonly='readonly' name=\"exam.exam_id\" autocomplete=\"off\"  lay-verify=\"required\">\n" +
+                            "        </div>\n" +
+                            "    </div>");
+                    }
+                    $("input[name='exam.examName']").val(data.examName);
+                    $.post('examAction_getThisType', {'getTypeId': data.exam_id}, function (result) {
+                        $("select[name='examTypeName']").val(result.type);
+                        form.render('select', 'form2');
+                    }, 'json');
+                    $("input[name='exam.examBeginTime']").val(data.examBeginTime);
+                    $("input[name='exam.examEndTime']").val(data.examEndTime);
+                    $('#IDMd').find("input").val(thisId);
+                    saveUrl = "examAction_saveExam";
+                    frameTitle = "编辑考试信息";
+                    frame();
+                    editFlag += 1;
+                } else {
+                    layer.confirm("确定要删除吗", {icon: 3, title: '系统提示'}, function (index) {
+                        $.post('examAction_delExam', {"delId": data.exam_id}, function (result) {
+                            if (result.complete) {
+                                layer.msg("删除成功", {icon: 6, time: 1200});
+                                obj.del();
+                            } else {
+                                layer.alert(result.errMsg, {icon: 5});
+                            }
+                        }, 'json');
+                    });
+                }
+            });
+            $("#delDulp").click(function () {
+                var checkStatus = table.checkStatus("examTable");
+                var data = checkStatus.data;
+                if (data.length == 0) {
+                    layer.msg("请勾选需要删除的行", {icon: 5, time: 1200});
+                    return;
+                }
+                layer.confirm("确定要删除这些行吗?", {icon: 3, title: '系统提示'}, function (index) {
+                    var strIds = [];
+                    $.each(data, function (index, item) {
+                        strIds.push(item.exam_id);
+                    });
+                    var delId = strIds.join(",");
+                    $.post('examAction_delExam', {"delId": delId}, function (result) {
+                        if (result.complete) {
+                            layer.msg("删除成功", {icon: 6, time: 1200});
+                            table.reload("examTable", {
+                                url: 'examAction_getAllInfo'
+                            });
+                        } else {
+                            layer.alert(result.errMsg, {icon: 5});
+                        }
+                    }, 'json');
+                });
+            });
+        });
+    </script>
+</head>
+<body>
+<div style="z-index:19831008;margin:5px;">
+    <div id="delDulpBtn" style="float:left;display:inline;margin-right: 4px;">&nbsp;<a href="javascript:void(0);"
+                                                                                       id="delDulp"
+                                                                                       class="layui-btn layui-btn-danger"><i
+            class="layui-icon">&#xe654;</i>批量删除</a></div>
+    <div id="addBtn" style="float:left;display:inline;margin-right: 10px;">&nbsp;<a href="javascript:void(0);" id="add"
+                                                                                    class="layui-btn layui-btn-normal"><i
+            class="layui-icon">&#xe654;</i>添加</a></div>
+    <form class="layui-form layui-form-pane" id="fm" lay-filter="fm">
+        <div class="layui-inline">
+            <div class="layui-input-inline">
+                <input class="layui-input" autocomplete="off" name="s_exam_id" placeholder="ID">
+            </div>
+        </div>
+        <div class="layui-inline">
+            <div class="layui-input-inline">
+                <input class="layui-input" autocomplete="off" name="s_examName" placeholder="考试名">
+            </div>
+        </div>
+        <div class="layui-inline">
+            <div class="layui-input-inline">
+                <input class="layui-input" autocomplete="off" id="s_beginTime" name="s_examBeginTime"
+                       placeholder="开始时间">
+            </div>
+        </div>
+        <div class="layui-inline">
+            <div class="layui-input-inline">
+                <input class="layui-input" autocomplete="off" id="s_endTime" name="s_examEndTime" placeholder="结束时间">
+            </div>
+        </div>
+        <div style="position:fixed;display:inline;">&nbsp;<a href="javascript:void(0);" id="search"
+                                                             class="layui-btn layui-btn-normal" lay-filter="searchBtn"
+                                                             lay-submit><i class="layui-icon">&#xe615;</i>搜索</a></div>
+    </form>
+</div>
+<div style="margin-top:2px;">
+    <table class="layui-table" lay-data="{height:400,url:'examAction_getAllInfo',id:'examTable',page:'true'}"
+           lay-filter="examTable">
+        <tr>
+            <thead>
+            <th lay-data="{checkbox:true}"></th>
+            <th lay-data="{field:'exam_id',align:'center',width:100,sort:true}">ID</th>
+            <th lay-data="{field:'examName',align:'center',width:200}">考试名</th>
+            <th lay-data="{field:'examBeginTime',align:'center',width:200,sort:true}">开始时间</th>
+            <th lay-data="{field:'examEndTime',align:'center',width:200,sort:true}">结束时间</th>
+            <th lay-data="{field:'examTypeName',align:'center',width:200}">类别</th>
+            <th lay-data="{field:'s',toolbar:'#tb',align:'center',width:200}">操作</th>
+            </thead>
+        </tr>
+    </table>
+</div>
+<div id="tb" style="display:none;">
+    <button type="button" class="layui-btn layui-btn-normal layui-btn-mini" lay-event="edit"><i class="layui-icon">&#xe642;</i><span>编辑</span>
+    </button>
+    <button type="button" class="layui-btn layui-btn-danger layui-btn-mini" lay-event="del"><i class="layui-icon">&#xe640;</i><span>删除</span>
+    </button>
+</div>
+<form id="fm2" lay-filter="form2" class="layui-form layui-form-pane" style="display:none;margin:5px;">
+    <div class="layui-form-item" style="margin-top: 10px;">
+        <label class="layui-form-label">考试名</label>
+        <div class="layui-input-inline">
+            <input class="layui-input" name="exam.examName" autocomplete="off" placeholder="考试名" lay-verify="required">
+        </div>
+    </div>
+    <div class="layui-form-item">
+        <label class="layui-form-label">类别</label>
+        <div class="layui-input-inline">
+            <select name="examTypeName" id="examTypeName" autocomplete="off" lay-verify="required" lay-filter="select">
+                <option value="">请选择类别...</option>
+            </select>
+        </div>
+    </div>
+    <div class="layui-form-item">
+        <label class="layui-form-label">开始时间</label>
+        <div class="layui-input-inline">
+            <input class="layui-input" id="beginTime" name="exam.examBeginTime" autocomplete="off" placeholder="开始时间"
+                   lay-verify="required">
+        </div>
+    </div>
+    <div class="layui-form-item">
+        <label class="layui-form-label">结束时间</label>
+        <div class="layui-input-inline">
+            <input class="layui-input" id="endTime" name="exam.examEndTime" autocomplete="off" placeholder="结束时间"
+                   lay-verify="required">
+        </div>
+    </div>
+    <div style="margin-left:25%;">
+        <a href="javascript:void(0);" class="layui-btn layui-btn-normal" lay-filter="saveBtn" lay-submit><i
+                class="layui-icon">&#xe61d;</i>保存</a>
+    </div>
+</form>
+</body>
+</html>

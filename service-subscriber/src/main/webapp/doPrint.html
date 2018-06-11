@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>打印准考证</title>
+    <link rel="shortcut icon" href="images/stephy.ico"/>
+    <script type="text/javascript" src="js/jquery.min.js"></script>
+    <script type="text/javascript" src="js/publicSetup.js"></script>
+    <style type="text/css">
+        td {
+            width: 200px;
+            border: 1px solid black;
+            height: 50px;
+            text-align: center;
+        }
+
+        table {
+            border-collapse: collapse;
+            border-spacing: 0;
+        }
+    </style>
+    <script type="text/javascript">
+        var date = new Date();
+        var url = window.location.href;
+        var val = url.split("?")[1];
+        var thisVal = val.split("=")[1];
+        $.post("stuAction_mySignUPwithApp", {"sId": thisVal}, function (result) {
+            $('#certificateId').text(result.certificateId);
+            $('#examTypeName').text(result.examTypeName);
+            $('#stuName').text(result.stuName);
+            $("#stuIDCard").text(result.stuIDCard);
+            $('#examTime').text(result.examTime);
+            $('#examName').text(result.examName);
+        });
+        $(function () {
+            setTimeout(function () {
+                window.print();
+            }, '800')
+        });
+    </script>
+</head>
+<body>
+<table align=center style="width:800px;margin-top:200px;border:1px solid black;">
+    <thead>
+    <td colspan="4" align="center"><span style="font-size: 24px;">准考证</span></td>
+    </thead>
+    <tr>
+        <td>准考证号</td>
+        <td id="certificateId"></td>
+        <td>试卷类型</td>
+        <td id="examTypeName"></td>
+    </tr>
+    <tr>
+        <td>姓名</td>
+        <td id="stuName"></td>
+        <td>身份证号</td>
+        <td id="stuIDCard"></td>
+    </tr>
+    <tr>
+        <td>考试时间</td>
+        <td id="examTime"></td>
+        <td>考试科</td>
+        <td id="examName"></td>
+    </tr>
+</table>
+</body>
+</html>

@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD 3.0//EN"
+        "http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd">
+<hibernate-mapping>
+    <class name="remote.vo.Admin" table="admin" catalog="ssh_finalexam" lazy="false">
+        <id name="adminId" type="java.lang.Integer">
+            <column name="adminId" not-null="true"/>
+            <generator class="native"/>
+        </id>
+        <property name="adminSex" type="java.lang.Integer">
+            <column name="adminSex"/>
+        </property>
+        <property name="adminAddress" type="java.lang.String">
+            <column name="adminAddress" length="100"/>
+        </property>
+        <property name="adminIDCard" type="java.lang.String">
+            <column name="adminIDCard" length="50" unique="true"/>
+        </property>
+        <property name="adminImg" type="java.lang.String">
+            <column name="adminImg" length="120"/>
+        </property>
+        <property name="adminName" type="java.lang.String">
+            <column name="adminName" length="50"/>
+        </property>
+        <property name="adminNo" type="java.lang.Integer">
+            <column name="adminNo" unique="true"/>
+        </property>
+        <property name="adminPhone" type="java.lang.String">
+            <column name="adminPhone" length="20"/>
+        </property>
+        <many-to-one name="member" unique="true" class="remote.vo.Member" column="memberId"></many-to-one>
+        <set name="notices" table="notice" outer-join="true" cascade="save-update">
+            <key column="adminId"/>
+            <one-to-many class="remote.vo.Notice"/>
+        </set>
+    </class>
+</hibernate-mapping>

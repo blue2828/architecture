@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>准考证打印</title>
+    <link rel="shortcut icon" href="images/stephy.ico"/>
+    <link rel="stylesheet" href="layui/css/layui.css" type="text/css" media="all">
+    <script type="text/javascript" src="js/jquery.min.js"></script>
+    <script type="text/javascript" src="layui/layui.js"></script>
+    <script type="text/javascript" src="js/publicSetup.js"></script>
+    <script type="text/javascript">
+        layui.use(['layer', 'table', 'jquery', 'form', 'laydate', 'element'], function () {
+            var layer = layui.layer, table = layui.table, $ = layui.jquery, form = layui.form, laydate = layui.laydate,
+                element = layui.element;
+            var thisUrl = '';
+            $.post('memberAction_getCMember', function (member) {
+                thisUrl = "adminOp_allSignUp?isPrint=1";
+                if (member.level == '系统管理员') {
+                    table.reload("examTable", {
+                        url: thisUrl
+                    });
+                } else if (member.level == '注册未审核') {
+                    location.href = 'index.html';
+                }
+            }, 'json');
+            laydate.render({
+                elem: '#s_beginTime',
+                type: 'datetime'
+            });
+            laydate.render({
+                elem: '#s_endTime',
+                type: 'datetime'
+            });
+            $('#output').click(function () {
+                var checkStatus = table.checkStatus("examTable");
+                var data = checkStatus.data;
+                if (checkStatus.data.length == 0) layer.msg("请选择需要导出的行", {icon: 5});
+                else {
+                    var sId = [];
+                    $.each(data, function (key, value) {
+                        sId.push(value.sId);
+                    });
+                    var strSIds = sId.join(",");
+                    location.href = "excel_output?ids=" + strSIds;
+                }
+            });
+            form.on('submit(searchBtn)', function (data) {
+                var reg = /^[\d|\s]*$/;
+                if (data.field.s_sId.match(reg)) {
+                    table.reload('examTable', {
+                        url: 'adminOp_allSignUp',
+                        where: {
+                            isPrint: 1,
+                            s_sId: data.field.s_sId,
+                            s_examName: data.field.s_examName,
+                            s_examBeginTime: data.field.s_examBeginTime,
+                            s_examEndTime: data.field.s_examEndTime,
+                            s_stuName: data.field.s_stuName
+                        }
+                    });
+                } else {
+                    layer.alert("需要搜索的ID只能为数字");
+                    return;
+                }
+            });
+            table.on("tool(examTable)", function (obj) {
+                var event = obj.event;
+                var data = obj.data;
+                $.post('adminOp_saveCerti', {'saveSId': data.sId, "certificateId": new Date().getTime()}, 'json');
+                if (event == 'view') {
+                    window.open("doPrint.html?sId=" + data.sId, "_blank");
+                }
+
+            });
+
+        });
+    </script>
+</head>
+<body>
+<div style="z-index:19831008;margin-top:2px;">
+    <form class="layui-form layui-form-pane" id="fm" lay-filter="fm">
+        <div class="layui-inline">
+            <button class="layui-btn layui-btn-normal" type="button" id="output"><i
+                    class="layui-icon">&#xe621;</i><span>导出exel</span></button>
+        </div>
+        <div class="layui-inline">
+            <div class="layui-input-inline">
+                <input class="layui-input" autocomplete="off" name="s_sId" placeholder="ID">
+            </div>
+        </div>
+        <div class="layui-inline">
+            <div class="layui-input-inline">
+                <input class="layui-input" autocomplete="off" name="s_examName" placeholder="考试名">
+            </div>
+        </div>
+        <div class="layui-inline">
+            <div class="layui-input-inline">
+                <input class="layui-input" autocomplete="off" id="s_beginTime" name="s_examBeginTime"
+                       placeholder="开始时间--->">
+            </div>
+        </div>
+        <div class="layui-inline">
+            <div class="layui-input-inline">
+                <input class="layui-input" autocomplete="off" id="s_endTime" name="s_examEndTime"
+                       placeholder="<---结束时间">
+            </div>
+        </div>
+        <div class="layui-inline">
+            <div class="layui-input-inline">
+                <input class="layui-input" autocomplete="off" id="s_stuName" name="s_stuName" placeholder="考生姓名">
+            </div>
+        </div>
+        <div style="position:fixed;display:inline;">&nbsp;<a href="javascript:void(0);" id="search"
+                                                             class="layui-btn layui-btn-normal" lay-filter="searchBtn"
+                                                             lay-submit><i class="layui-icon">&#xe615;</i>搜索</a></div>
+    </form>
+</div>
+<div style="margin-top:2px;">
+    <table class="layui-table" lay-data="{height:400,id:'examTable',page:'true'}" lay-filter="examTable">
+        <tr>
+            <thead>
+            <th lay-data="{checkbox:true}"></th>
+            <th lay-data="{field:'sId',align:'center',width:80,sort:true}">审批ID</th>
+            <th lay-data="{field:'examName',align:'center',width:180}">考试名</th>
+            <th lay-data="{field:'stuName',align:'center',width:100}">报名考生</th>
+            <th lay-data="{field:'examBeginTime',align:'center',width:200,sort:true}">开始时间</th>
+            <th lay-data="{field:'examEndTime',align:'center',width:200,sort:true}">结束时间</th>
+            <th lay-data="{field:'examTypeName',align:'center',width:100}">类别</th>
+            <th lay-data="{field:'appro_stat',align:'center',width:100}">审批状态</th>
+            <th lay-data="{field:'sp',toolbar:'#tb',align:'center',width:160}">操作</th>
+            </thead>
+        </tr>
+    </table>
+</div>
+<div id="tb" style="display:none;">
+    <button id="view" class="layui-btn layui-btn-normal layui-btn-mini" lay-event="view"><i
+            class="layui-icon">&#xe63c;</i><span>打印准考证</span></button>
+</div>
+</body>
+</html>

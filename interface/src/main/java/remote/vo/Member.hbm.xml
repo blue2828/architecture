@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD 3.0//EN"
+        "http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd">
+<hibernate-mapping>
+    <class name="remote.vo.Member" table="member" catalog="ssh_finalexam" lazy="false">
+        <id name="memberId" type="java.lang.Integer">
+            <column name="memberId" not-null="true"/>
+            <generator class="native"/>
+        </id>
+        <property name="memName" type="java.lang.String">
+            <column name="memName" length="50" not-null="true"/>
+        </property>
+        <property name="level" type="java.lang.Integer">
+            <column name="level"/>
+        </property>
+        <property name="memPassword" type="java.lang.String">
+            <column name="memPassword" length="50" not-null="true"/>
+        </property>
+        <property name="isApproved" type="java.lang.Integer">
+            <column name="isApproved"/>
+        </property>
+        <one-to-one name="student" class="remote.vo.Student" property-ref="member"/>
+        <one-to-one name="admin" class="remote.vo.Admin" property-ref="member"/>
+    </class>
+</hibernate-mapping>

@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD 3.0//EN"
+        "http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd">
+<hibernate-mapping>
+    <class name="remote.vo.Student" table="student" catalog="ssh_finalexam" lazy="false">
+        <id name="stuId" type="java.lang.Integer">
+            <column name="stuId" not-null="true"/>
+            <generator class="native"/>
+        </id>
+        <property name="stuSex" type="java.lang.Integer">
+            <column name="stuSex"/>
+        </property>
+        <property name="stuAddress" type="java.lang.String">
+            <column name="stuAddress" length="100"/>
+        </property>
+        <property name="stuIDCard" type="java.lang.String">
+            <column name="stuIDCard" length="50" unique="true"/>
+        </property>
+        <property name="stuImg" type="java.lang.String">
+            <column name="stuImg" length="120"/>
+        </property>
+        <property name="stuName" type="java.lang.String">
+            <column name="stuName" length="50"/>
+        </property>
+        <property name="stuNo" type="java.lang.Integer">
+            <column name="stuNo" unique="true"/>
+        </property>
+        <property name="stuPhone" type="java.lang.String">
+            <column name="stuPhone" length="20"/>
+        </property>
+        <property name="editInfoRead" type="java.lang.Integer">
+            <column name="editInfoRead" default="0"/>
+        </property>
+        <property name="loginRead" type="java.lang.Integer">
+            <column name="loginRead" default="0"/>
+        </property>
+        <property name="certificateId" column="certificateId" type="java.lang.String" length="100"/>
+        <many-to-one name="member" class="remote.vo.Member" column="memberId" unique="true"/>
+        <set name="signUpStatus" table="signUpStatus" inverse="true" cascade="save-update" lazy="false">
+            <key column="stu_id"/>
+            <one-to-many class="remote.vo.SignUpStatus"/>
+        </set>
+    </class>
+</hibernate-mapping>

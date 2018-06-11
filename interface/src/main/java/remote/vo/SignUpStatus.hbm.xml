@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD 3.0//EN"
+        "http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd">
+<hibernate-mapping>
+    <class name="remote.vo.SignUpStatus" table="signUpStatus" catalog="ssh_finalexam">
+        <id name="sId" type="java.lang.Integer">
+            <column name="sId" not-null="true"/>
+            <generator class="native"/>
+        </id>
+        <property name="appro_stat" type="java.lang.Integer" column="appro_stat"/>
+        <many-to-one name="student" class="remote.vo.Student" cascade="save-update" column="stu_id" lazy="false"/>
+        <many-to-one name="exam" class="remote.vo.Exam" cascade="save-update" column="exam_id" lazy="false"/>
+    </class>
+</hibernate-mapping>

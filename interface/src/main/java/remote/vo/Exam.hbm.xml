@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD 3.0//EN"
+        "http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd">
+<hibernate-mapping>
+    <class name="remote.vo.Exam" table="exam" catalog="ssh_finalexam">
+        <id name="exam_id" type="java.lang.Integer">
+            <column name="exam_id" not-null="true"/>
+            <generator class="native"/>
+        </id>
+        <property name="examName" type="java.lang.String">
+            <column name="examName" length="100"/>
+        </property>
+        <set name="examTypes" table="exam_type" inverse="false" cascade="save-update" lazy="false">
+            <key column="examId"/>
+            <many-to-many column="examTypeId" class="remote.vo.ExamType"/>
+        </set>
+        <property name="examBeginTime" type="java.util.Date">
+            <column name="examBeginTime"/>
+        </property>
+        <property name="examEndTime" type="java.util.Date">
+            <column name="examEndTime"/>
+        </property>
+        <set name="signUpStatuses" cascade="save-update" table="signUpStatus" inverse="true" lazy="false">
+            <key column="exam_id"></key>
+            <one-to-many class="remote.vo.SignUpStatus"/>
+        </set>
+    </class>
+</hibernate-mapping>

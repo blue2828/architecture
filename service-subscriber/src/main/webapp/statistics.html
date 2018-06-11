@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>统计考试</title>
+    <link rel="shortcut icon" href="images/stephy.ico"/>
+    <script type="text/javascript" src="js/jquery.min.js"></script>
+    <script type="text/javascript" src="js/echarts.js"></script>
+    <script type="text/javascript" src="js/publicSetup.js"></script>
+    <link rel="stylesheet" href="layui/css/layui.css" type="text/css" media="all">
+    <script>
+        $(function () {
+            $.post('memberAction_getCMember', function (member) {
+                if (member.level == '注册未审核') {
+                    location.href = 'index.html';
+                }
+            }, 'json');
+            $.post("echars_echartsData", function (result) {
+                var datas = [];
+                var count = [];
+                $.each(result.data, function (key, value) {
+                    datas.push(value.examName);
+                    count.push(value.count);
+                });
+                var thisType = document.getElementById("main");
+                var myChart = echarts.init(thisType);
+                var option = {
+                    title: {
+                        text: '考试报名统计'
+                    },
+                    tooltip: {},
+                    legend: {
+                        data: ['考试']
+                    },
+                    grid: {
+                        y2: 140
+                    },
+                    xAxis: {
+                        axisLabel: {
+                            interval: 0,
+                            rotate: -30
+                        },
+                        data: datas
+                    },
+                    yAxis: {},
+                    series: [{
+                        name: '考试',
+                        type: 'bar',
+                        data: count
+                    }]
+                };
+                myChart.setOption(option);
+            }, 'json');
+        });
+
+    </script>
+</head>
+<body>
+<div id="main" style="width: 600px;height:400px;"></div>
+</body>
+</html>

@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>系统公告</title>
+    <link rel="shortcut icon" href="images/stephy.ico"/>
+    <link rel="stylesheet" href="layui/css/layui.css" type="text/css" media="all">
+    <script type="text/javascript" src="js/jquery.min.js"></script>
+    <script type="text/javascript" src="layui/layui.js"></script>
+    <script type="text/javascript" src="js/publicSetup.js"></script>
+    <script>
+        layui.use(['layer', 'table', 'jquery', 'form', 'laydate'], function () {
+            var layer = layui.layer, table = layui.table, $ = layui.jquery, form = layui.form, laydate = layui.laydate;
+            $.post("memberAction_getCMember", function (result) {
+                //var isApproved=result.isApproved;
+                var level = result.level;
+                if (level == '注册未审核' || level == '考生') {
+                    $('#delDulpBtn').css("display", "none");
+                    $('#publishBtn').css("display", "none");
+                    $("button[lay-event='del']").remove();
+                    $("button[lay-event='edit']").remove();
+                }
+            }, 'json');
+            laydate.render({
+                elem: '#s_pbBeginTime',
+                type: 'datetime'
+            });
+
+            laydate.render({
+                elem: '#s_pbEndTime',
+                type: 'datetime'
+            });
+            form.on('submit(searchBtn)', function (data) {
+                var reg = /^[\d|\s]*$/;
+                if ($("input[name='s_noticeId']").val().match(reg)) {
+                    table.reload('noticeTable', {
+                        url: 'adminOp_viewAllNotice',
+                        where: {
+                            s_noticeId: $("input[name='s_noticeId']").val(),
+                            s_noticeTitle: $("input[name='s_noticeTitle']").val(),
+                            s_pbBeginTime: $("input[name='s_pbBeginTime']").val(),
+                            s_pbEndTime: $("input[name='s_pbEndTime']").val(),
+                            s_adminName: $("input[name='s_adminName']").val()
+                        }
+                    });
+                } else {
+                    layer.alert("需要搜索的ID只能为数字");
+                    return;
+                }
+
+            });
+            var frameTitle = "";
+            var saveOrUpUrl = "";
+            var saveOrUpNotice = function () {
+                layer.open({
+                    type: 1,
+                    content: $('#addFrame'),
+                    area: ['800px', '480px'],
+                    title: frameTitle,
+                    success: function (layero, index) {
+                        form.on('submit(publish)', function (data) {
+                            $.ajax({
+                                url: saveOrUpUrl,
+                                async: true,
+                                contentType: 'application/json',
+                                dataType: 'json',
+                                data: data.field,
+                                success: function (result) {
+                                    if (result.success) {
+                                        layer.msg("保存成功", {icon: 6, time: 1000});
+                                        layer.close(index);
+                                        table.reload('noticeTable', {
+                                            url: 'adminOp_viewAllNotice'
+                                        });
+                                        clearForm();
+                                    } else {
+                                        layer.msg(result.errMsg, {icon: 5});
+                                    }
+                                }
+                            });
+                        });
+                    }
+                });
+            };
+            $('#add').click(function () {
+                clearForm();
+                clearRule();
+                $("a[lay-filter='publish']").last().text('发布公告');
+                frameTitle = "发布公告";
+                saveOrUpUrl = "adminOp_saveNotce";
+                var date = new Date();
+                $('#p_noticeTime').val(date.getFullYear() + "-" + (date.getMonth() + 1) + "-" + date.getDate() + " " + date.getHours() + ":" + date.getMinutes() + ":" + date.getSeconds());
+                saveOrUpNotice();
+            });
+            $('#delDulp').click(function () {
+                var checkStatus = table.checkStatus("noticeTable");
+                var data = checkStatus.data;
+                if (data.length == 0) {
+                    layer.msg('请勾选需要删除的数据', {icon: 2});
+                } else {
+                    layer.confirm('确定要删除吗?', function (index) {
+                        var noticeIds = [];
+                        $.each(data, function (key, value) {
+                            noticeIds.push(value.noticeId);
+                        });
+                        var del_noticeId = noticeIds.join(",");
+                        $.post('adminOp_delNoticeById', {'del_noticeId': del_noticeId}, function (result) {
+                            if (result.success) {
+                                layer.msg('删除成功', {icon: 1, time: 1000});
+                                table.reload('noticeTable', {
+                                    url: "adminOp_viewAllNotice"
+                                });
+                            } else {
+                                layer.msg(result.errMsg, {icon: 2, time: 1000});
+                            }
+                        }, 'json')
+                    });
+                }
+            });
+            table.on('tool(notice)', function (obj) {
+                var data = obj.data;
+                var event = obj.event;
+                var loadFormData = function () {
+                    $("input[name='notice.noticeTitle']").val(obj.data.noticeTitle);
+                    $("input[name='notice.noticeTime']").val(obj.data.noticeTime);
+                    $("textarea[name='notice.noticeContent']").val(obj.data.noticeContent);
+                };
+                if (event == 'view') {
+                    frameTitle = "查看公告 ";
+                    $("input[name='notice.noticeTitle']").attr("readonly", "true");
+                    $("textarea[name='notice.noticeContent']").attr("readonly", "true");
+                    $("a[lay-filter='publish']").css("display", "none");
+                    loadFormData();
+                    saveOrUpNotice();
+                } else if (event == 'del') {
+                    layer.confirm('确定要删除当前项吗', {icon: 3, title: '系统提示'}, function (index) {
+                        $.post('adminOp_delNoticeById', {'del_noticeId': data.noticeId}, function (result) {
+                            if (result.success) {
+                                layer.msg('删除成功', {icon: 1, time: 1000});
+                                layer.close(index);
+                                obj.del();
+                            } else {
+                                layer.msg(result.errMsg, {icon: 5, time: 1000});
+                            }
+                        }, 'json');
+                    });
+                } else {
+                    frameTitle = "编辑公告";
+                    saveOrUpUrl = "adminOp_saveNotce?updateId=" + data.noticeId + "";
+                    clearRule();
+                    loadFormData();
+                    $("a[lay-filter='publish']").last().text('编辑公告');
+                    saveOrUpNotice();
+                }
+            });
+            var clearRule = function () {
+                $("input[name='notice.noticeTitle']").removeAttr("readonly");
+                $("textarea[name='notice.noticeContent']").removeAttr("readonly");
+                $("a[lay-filter='publish']").removeAttr("style");
+            };
+            var clearForm = function () {
+                $("input[name='notice.noticeTitle']").val('');
+                $("textarea[name='notice.noticeContent']").val('');
+            };
+        });
+    </script>
+</head>
+<body>
+<div style="margin:5px;z-index:19831008">
+    <div id="delDulpBtn" style="float:left;display:inline;margin-right: 4px;">&nbsp;<a href="javascript:void(0);"
+                                                                                       id="delDulp"
+                                                                                       class="layui-btn layui-btn-danger"><i
+            class="layui-icon">&#xe654;</i>批量删除</a></div>
+    <div id="publishBtn" style="float:left;display:inline;margin-right: 10px;">&nbsp;<a href="javascript:void(0);"
+                                                                                        id="add"
+                                                                                        class="layui-btn layui-btn-normal"><i
+            class="layui-icon">&#xe654;</i>发布</a></div>
+    <form class="layui-form" lay-filter="searchForm">
+        <div class="layui-inline">
+            <div class="layui-input-inline">
+                <input type="text" class="layui-input" name="s_noticeId" placeholder="公告ID" style="width:120px;">&nbsp;
+            </div>
+        </div>
+        <div class="layui-inline">
+            <div class="layui-input-inline">
+                <input type="text" class="layui-input" name="s_noticeTitle" placeholder="标题" style="width:180px;">&nbsp;
+            </div>
+        </div>
+        <div class="layui-inline">
+            <div class="layui-input-inline">
+                <input class="layui-input" id="s_pbBeginTime" name="s_pbBeginTime" placeholder="发布时间  ———>"
+                       style="width:180px;">&nbsp;
+            </div>
+        </div>
+        <div class="layui-inline">
+            <div class="layui-input-inline">
+                <input class="layui-input" id="s_pbEndTime" name="s_pbEndTime" placeholder="发布时间  <———"
+                       style="width:180px;">&nbsp;
+            </div>
+        </div>
+        <div class="layui-inline">
+            <div class="layui-input-inline">
+                <input class="layui-input" name="s_adminName" placeholder="发布人" style="width:120px;">&nbsp;
+            </div>
+        </div>
+        <div style="position:fixed;display:inline;">&nbsp;<a href="javascript:void(0);" id="search"
+                                                             class="layui-btn layui-btn-normal" lay-filter="searchBtn"
+                                                             lay-submit><i class="layui-icon">&#xe615;</i>搜索</a></div>
+    </form>
+</div>
+</div>
+<div style="margin-top:2px;">
+    <table class="layui-table" lay-data="{height:400,url:'adminOp_viewAllNotice',id:'noticeTable',page:'true'}"
+           lay-filter="notice">
+        <tr>
+            <thead>
+            <th lay-data="{checkbox:'true'}"></th>
+            <th lay-data="{id:1,field:'noticeId',width:100,sort:'true',align:'center'}">公告ID</th>
+            <th lay-data="{id:2,field:'noticeTitle',width:200,align:'center'}">标题</th>
+            <th lay-data="{id:3,field:'noticeContent',width:200,align:'center'}">内容</th>
+            <th lay-data="{id:4,field:'noticeTime',width:200,sort:'true',align:'center'}">发布时间</th>
+            <th lay-data="{id:4,field:'adminName',width:100,sort:'true',align:'center'}">发布人</th>
+            <th lay-data="{id:5,field:'op',width:280,toolbar:'#tb',align:'center'}">操作</th>
+            </thead>
+        </tr>
+    </table>
+</div>
+<div id="tb" style="display:none;">
+    <button class="layui-btn layui-btn-normal layui-btn-mini" lay-event="view"><i class="layui-icon">&#xe7a0;</i><span>查看</span>
+    </button>
+    <button class="layui-btn layui-btn-danger layui-btn-mini" lay-event="del"><i
+            class="layui-icon">&#xe640;</i><span>删除</span></button>
+    <button class="layui-btn layui-btn-mini" lay-event="edit"><i class="layui-icon">&#xe642;</i><span>编辑</span></button>
+</div>
+<div style="display:none;margin-top:10px;" id="addFrame">
+    <form class="layui-form layui-form-pane">
+        <div class="layui-form-item">
+            <label class="layui-form-label">标题</label>
+            <div class="layui-input-inline">
+                <input class="layui-input" autocomplete="off" lay-verify="required" name="notice.noticeTitle"></input>
+            </div>
+        </div>
+        <div class="layui-form-item">
+            <label class="layui-form-label">发布时间</label>
+            <div class="layui-input-inline">
+                <input class="layui-input layui-disabled" readonly="readonly" id="p_noticeTime" autocomplete="off"
+                       lay-verify="required" name="notice.noticeTime"></input>
+            </div>
+        </div>
+        <div class="layui-form-item layui-text">
+            <label class="layui-form-label">内容主体</label>
+            <div class="layui-input-block ">
+                <textarea class="layui-textarea" style="height:200px;" autocomplete="off" lay-verify="required"
+                          name="notice.noticeContent"></textarea>
+            </div>
+        </div>
+        <div style="margin-left:46%;margin-top:20px;">
+            <a href="javascript:void(0)" class="layui-btn layui-btn-normal" lay-submit lay-filter="publish"><i
+                    class="layui-icon">&#xe609;</i><span>发布</span></a>
+        </div>
+    </form>
+</div>
+</body>
+</html>

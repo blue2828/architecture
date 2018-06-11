@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:p="http://www.springframework.org/schema/p"
+       xmlns:dubbo="http://code.alibabatech.com/schema/dubbo"
+       xmlns:aop="http://www.springframework.org/schema/aop"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xmlns:jee="http://www.springframework.org/schema/jee"
+       xmlns:tx="http://www.springframework.org/schema/tx"
+       xsi:schemaLocation="http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop-4.0.xsd
+      http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-4.0.xsd
+      http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-4.0.xsd
+      http://www.springframework.org/schema/jee http://www.springframework.org/schema/jee/spring-jee-4.0.xsd
+      http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx-4.0.xsd
+        http://code.alibabatech.com/schema/dubbo
+        http://code.alibabatech.com/schema/dubbo/dubbo.xsd"
+>
+    <context:component-scan base-package="service.imp"></context:component-scan>
+    <context:component-scan base-package="dao.imp"></context:component-scan>
+    <context:component-scan base-package="dao"/>
+    <context:property-placeholder location="jdbc.properties"/>
+    <bean id="dataSource" class="org.apache.commons.dbcp2.BasicDataSource">
+        <property name="driverClassName" value="${jdbc.driver}"/>
+        <property name="username" value="${jdbc.username}"/>
+        <property name="password" value="${jdbc.password}"/>
+        <property name="url" value="${jdbc.url}"/>
+    </bean>
+    <bean id="sessionFactory" class="org.springframework.orm.hibernate4.LocalSessionFactoryBean">
+        <property name="dataSource" ref="dataSource"/>
+        <property name="hibernateProperties">
+            <props>
+                <prop key="hibernate.hbm2ddl.auto">update</prop>
+                <prop key="hibernate.show_sql">true</prop>
+                <prop key="hibernate.dialect">org.hibernate.dialect.MySQL5Dialect</prop>
+            </props>
+        </property>
+        <property name="mappingResources">
+            <list>
+                <value>remote/vo/Member.hbm.xml</value>
+                <value>remote/vo/Admin.hbm.xml</value>
+                <value>remote/vo/Student.hbm.xml</value>
+                <value>remote/vo/Notice.hbm.xml</value>
+                <value>remote/vo/Exam.hbm.xml</value>
+                <value>remote/vo/ExamType.hbm.xml</value>
+                <value>remote/vo/SignUpStatus.hbm.xml</value>
+            </list>
+        </property>
+    </bean>
+    <!--<bean id="test" class="util.test" >
+        <property name="sessionFactory" ref="sessionFactory"/>
+    </bean>-->
+    <bean id="transactionManager" class="org.springframework.orm.hibernate4.HibernateTransactionManager">
+        <property name="sessionFactory" ref="sessionFactory"/>
+    </bean>
+    <tx:advice id="txAdvice" transaction-manager="transactionManager">
+        <tx:attributes>
+            <tx:method name="save*" propagation="REQUIRED"/>
+            <tx:method name="delete*" propagation="REQUIRED"/>
+            <tx:method name="update*" propagation="REQUIRED"/>
+            <tx:method name="get*" read-only="true" propagation="NOT_SUPPORTED"/>
+            <tx:method name="*" read-only="true"/>
+        </tx:attributes>
+    </tx:advice>
+    <aop:config proxy-target-class="true">
+        <aop:pointcut id="allServiceMethod" expression="execution(* service.*.*(..))"/>
+        <aop:advisor pointcut-ref="allServiceMethod" advice-ref="txAdvice"/>
+    </aop:config>
+    <dubbo:application name="arche-publisher" owner="programmer" organization="dubbox" />
+    <dubbo:registry address="zookeeper://localhost:2181" timeout="6000"/>
+    <dubbo:protocol name="dubbo" port="20880" />
+    <!--    <dubbo:service interface="com.lyh.dubbo.demo.service.IDemoService" ref="demoService" protocol="dubbo"/>-->
+    <dubbo:service interface="service.IAdminOpService" ref="adminOpService" protocol="dubbo"/>
+    <dubbo:service interface="service.IEchartsService" ref="echartsService" protocol="dubbo"/>
+    <dubbo:service interface="service.IExamService" ref="examService" protocol="dubbo" timeout="6000"/>
+    <dubbo:service interface="service.IExamTypeService" ref="examTypeService" protocol="dubbo" timeout="6000"/>
+    <dubbo:service interface="service.IMemberService" ref="memberService" protocol="dubbo" timeout="6000"/>
+    <dubbo:service interface="service.IStudentService" ref="studentService" protocol="dubbo" timeout="6000"/>
+</beans>

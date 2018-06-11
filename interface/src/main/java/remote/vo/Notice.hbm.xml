@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD 3.0//EN"
+        "http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd">
+<hibernate-mapping>
+    <class name="remote.vo.Notice" table="notice" catalog="ssh_finalexam">
+        <id name="noticeId" type="java.lang.Integer">
+            <column name="noticeId"/>
+            <generator class="native"/>
+        </id>
+        <property name="noticeTitle" type="java.lang.String" column="noticeTitle" length="100"/>
+        <property name="noticeContent" type="text" column="noticeContent"/>
+        <property name="noticeTime" type="java.util.Date" column="noticeTime"/>
+        <many-to-one name="admin" class="remote.vo.Admin" outer-join="true" column="adminId" cascade="save-update"/>
+    </class>
+</hibernate-mapping>

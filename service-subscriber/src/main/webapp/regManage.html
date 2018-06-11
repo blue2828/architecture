@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>管理注册</title>
+    <link rel="shortcut icon" href="images/stephy.ico"/>
+    <link rel="stylesheet" href="layui/css/layui.css" type="text/css" media="all">
+    <script type="text/javascript" src="js/jquery.min.js"></script>
+    <script type="text/javascript" src="layui/layui.js"></script>
+    <script type="text/javascript" src="js/publicSetup.js"></script>
+    <script>
+        layui.use(['layer', 'table', 'jquery', 'form'], function () {
+            var layer = layui.layer, table = layui.table, $ = layui.jquery, form = layui.form;
+            form.on('checkbox(approve)', function (obj) {
+                var memberId = obj.elem.parentNode.parentNode.parentNode.firstChild.nextSibling.innerText;
+                var isApproved = obj.elem.checked ? 1 : 0;
+                $.post('memberAction_approReg', {'memberId': memberId}, function (result) {
+                    if (result.success) {
+                        layer.msg("审批成功", {icon: 6, time: 1000});
+                        table.reload("regTable", {
+                            url: "memberAction_viewAllReg",
+                            where: {
+                                s_memberId: '',
+                                s_memName: ''
+                            }
+                        });
+                        $("input[name='s_memberId']").val('');
+                        $("input[name='s_memName']").val('');
+                    } else layer.msg('审批失败,请重试', {icon: 5, time: 1000});
+                }, 'json');
+            });
+            form.on('checkbox(dulpAppro)', function (obj) {
+                var checkStatus = table.checkStatus('regTable');
+                if (checkStatus.data.length <= 0 && obj.elem.checked) {
+                    layer.msg('请勾选需要审批的行', {icon: 5, time: 1000});
+                } else if (checkStatus.data.length != 0 && obj.elem.checked) {
+                    var ids = [];
+                    $.each(checkStatus.data, function (i, value) {
+                        ids.push(value.memberId);
+                    });
+                    var strId = ids.join(',');
+                    $.post('memberAction_approReg', {"memberIds": strId}, function (result) {
+                        if (result.success) {
+                            layer.msg('审批成功', {icon: 6, time: 1000});
+                            $("input[name='s_memberId']").val('');
+                            $("input[name='s_memName']").val('');
+                            table.reload('regTable', {
+                                url: 'memberAction_viewAllReg',
+                                where: {
+                                    s_memberId: '',
+                                    s_memName: ''
+                                }
+                            });
+                        }
+                    }, 'json');
+                }
+            });
+            $('#search').on('click', function () {
+                table.reload('regTable', {
+                    url: 'memberAction_viewAllReg',
+                    where: {
+                        s_memberId: $("input[name='s_memberId']").val(),
+                        s_memName: $("input[name='s_memName']").val()
+                    }
+                });
+            });
+        });
+    </script>
+    <script type="text/javascript" id="operaSwitch">
+        <input type="checkbox" name="op"  title="审批" lay-filter="approve"  {{d.isApproved == '审批' ? 'checked' : ''}}>
+    </script>
+</head>
+<body>
+<div style="margin-top: 5px;margin-left:5px;z-index:19831008">
+    <div class="layui-form">
+        <div class="layui-inline">
+            <div class="layui-input-inline">
+                <input name="appro" type="checkbox" title="多选审核" lay-filter="dulpAppro">
+            </div>
+        </div>
+        <div class="layui-inline">
+            <div class="layui-input-inline">
+                <input type="text" class="layui-input" name="s_memberId" placeholder="账号" style="width:200px;">&nbsp;
+            </div>
+        </div>
+        <div class="layui-inline">
+            <div class="layui-input-inline">
+                <input type="text" class="layui-input" name="s_memName" placeholder="姓名" style="width:200px;">&nbsp;
+            </div>
+        </div>
+        <div style="position:fixed;display:inline;">&nbsp;<a href="javascript:void(0);" id="search"
+                                                             class="layui-btn layui-btn-normal"><i class="layui-icon">&#xe615;</i>搜索</a>
+        </div>
+    </div>
+</div>
+</div>
+<div style="margin-top:2px;">
+    <table class="layui-table" lay-data="{height:400,url:'memberAction_viewAllReg',id:'regTable',page:'true'}"
+           lay-filter="regManage">
+        <tr>
+            <thead>
+            <th lay-data="{checkbox:'true'}"></th>
+            <th lay-data="{id:1,field:'memberId',width:200,sort:'true',align:'center'}">账号</th>
+            <th lay-data="{id:2,field:'memName',width:200,align:'center'}">姓名</th>
+            <th lay-data="{id:3,field:'level',width:200,align:'center'}">权限</th>
+            <th lay-data="{id:4,field:'isApproved',width:200,sort:'true',align:'center'}">审批状态</th>
+            <th lay-data="{id:5,field:'op',width:200,templet:'#operaSwitch' }">审批</th>
+            </thead>
+        </tr>
+    </table>
+</div>
+</body>
+</html>

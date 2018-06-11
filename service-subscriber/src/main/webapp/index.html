@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html>
+<meta charset="utf-8">
+<head>
+    <title>考试报名系统</title>
+    <link rel="shortcut icon" href="images/stephy.ico"/>
+    <link rel="stylesheet" href="layui/css/layui.css" type="text/css">
+    <link rel="stylesheet" href="layui/css/app.css" type="text/css">
+    <script type="text/javascript" src="layui/layui.js"></script>
+    <script type="text/javascript" src="js/jquery.min.js"></script>
+    <script type="text/javascript" src="js/publicSetup.js"></script>
+    <script type="text/javascript">
+        layui.config({
+            base: 'build/js/'
+        }).use(['app'], function () {
+            var app = layui.app;
+            app.set({
+                type: 'iframe'
+            }).init();
+        });
+        layui.use(['layer', 'jquery', 'laydate', 'form', 'upload', 'element'], function () {
+            var layer = layui.layer, $ = layui.jquery, laydate = layui.laydate, form = layui.form,
+                upload = layui.upload, element = layui.element;
+            document.getElementById("littleImg").src = 'memberAction_getMemberImage?Math.ramdom()*' + new Date();
+            document.getElementById("bigImg").src = 'memberAction_getMemberImage?version=Math.random()*' + new Date();
+            document.getElementById("memberImg").src = 'memberAction_getMemberImage?version=Math.random()*' + new Date();
+            $.post('memberAction_getCMember', function (member) {
+                $('#edit_memberName').val(member.memberName);
+                $('#edit_memberId').val(member.id);
+                $('#edit_Level').val(member.level);
+                $('#temp_editInfoRead').val(member.editInfoRead);
+                if (member.level == '系统管理员' || member.level == '考生') {
+                    $('#edit_sex').val(member.sex);
+                    form.render('select', 'fm');
+                    $('#edit_phone').val(member.phone);
+                    $('#edit_address').val(member.address);
+                    $("#edit_idCard").val(member.identity);
+                }
+                var isApproved = member.isApproved;
+                isApproved == 0 ? isApproved = '未审批' : isApproved = '审批';
+                $('#temp').val(isApproved);
+                $('#tempLevel').val(member.level);
+                $('#welWord').text('考试报名系统欢迎您 ' + member.memberName + '！');
+                if (member.loginRead == 0) {
+                    layer.alert('您已通过注册审批，请点击右上角的头像来完善您的个人信息吧', {icon: 6, skin: 'layui-layer-lan'});
+                    $.post('memberAction_loginRead', {'loginRead': 1});
+                } else if (member.loginRead == 1) {
+                    if (member.editInfoRead == 0) {
+                        layer.alert("您还未完善信息，请点击右上角的头像来完善您的个人信息", {icon: 6, skin: 'layui-layer-lan'});
+                    }
+                }
+                if (isApproved == '未审批' || member.level == '考生') {
+                    $('#regModule').before("<li id='approview' class='layui-nav-item'><a href='#' onclick='reviewSp()' kit-target ><i class='layui-icon'>&#xe612;</i><span>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;查看注册审核进度</span></a></li>");
+                    $('#approview').before("<li class='layui-nav-item'><a id='ksbm' href='#' kit-target data-options='{id:10,title:\"报名考试\",url:\"signUp.html\",icon:\"&#xe63c\"}' ><i class='layui-icon'>&#xe63c;</i><span>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;报名考试</span></a></li>");
+                    $('#regModule').children().first().attr("href", 'javascript:void(0)');
+                    $('#regModule').children().first().removeAttr("kit-target");
+                    $('#regModule').hover(function () {
+                        var that = this;
+                        tip1 = layer.tips("您没有权限", that);
+                    }, function () {
+                        layer.close(tip1)
+                    });
+                    if (member.level == '注册未审核') {
+                        $('#ksbm').attr("href", 'javascript:void(0)');
+                        $('#ksbm').removeAttr("kit-target");
+                        $('#ksbm').parent().hover(function () {
+                            var that = this;
+                            tip1 = layer.tips("您目前没有权限，审批通过后再试", that);
+                        }, function () {
+                            layer.close(tip1);
+                        });
+                    }
+                    $('#regLi').attr("href", "javascript:void(0)");
+                    $('#regLi').removeAttr("kit-target");
+                    $('#regLi').parent().hover(function () {
+                        var that = this;
+                        tip1 = layer.tips("您没有权限", that);
+                    }, function () {
+                        layer.close(tip1)
+                    });
+                    $('#baomiLi').attr("href", "javascript:void(0)");
+                    $('#baomiLi').removeAttr("kit-target");
+                    $('#baomiLi').parent().hover(function () {
+                        var that = this;
+                        tip1 = layer.tips("您没有权限", that);
+                    }, function () {
+                        layer.close(tip1)
+                    });
+                    $('#queryLi').attr("href", "javascript:void(0)");
+                    $('#queryLi').removeAttr("kit-target");
+                    $('#queryLi').parent().hover(function () {
+                        var that = this;
+                        tip1 = layer.tips("您没有权限", that);
+                    }, function () {
+                        layer.close(tip1)
+                    });
+                    $('#examLi').attr("href", "javascript:void(0)");
+                    $('#examLi').removeAttr("kit-target");
+                    $('#examLi').parent().hover(function () {
+                        var that = this;
+                        tip1 = layer.tips("您没有权限", that);
+                    }, function () {
+                        layer.close(tip1)
+                    });
+                    $('#examLi').parent().next().children().first().attr("href", "javascript:void(0)");
+                    $('#examLi').parent().next().children().first().removeAttr("kit-target");
+                    $('#examLi').parent().next().children().first().parent().hover(function () {
+                        var that = this;
+                        tip1 = layer.tips("您没有权限", that);
+                    }, function () {
+                        layer.close(tip1)
+                    });
+                    $('#printLi').attr("href", "javascript:void(0)");
+                    $('#printLi').removeAttr("kit-target");
+                    $('#printLi').parent().hover(function () {
+                        var that = this;
+                        tip1 = layer.tips("由管理员打印,非管理员不开通权限", that);
+                    }, function () {
+                        layer.close(tip1)
+                    });
+                    if (member.level == '注册未审核') {
+                        $('#addUp').attr("href", "javascript:void(0)");
+                        $('#addUp').removeAttr("kit-target");
+                        $('#addUp').parent().hover(function () {
+                            var that = this;
+                            tip1 = layer.tips("您目前没有权限", that);
+                        }, function () {
+                            layer.close(tip1)
+                        });
+                    }
+                }
+                if (isApproved == '未审批') {
+                    $('#submitBtn').css('display', "none");
+                    $('#uploadImgFa').css('display', "none");
+                    $('#edit_memberName').attr('class', "layui-input layui-disabled");
+                    $('#edit_memberName').attr('readonly', "true");
+                    $('#sexModule').remove();
+                    $('#phoneModule').remove();
+                    $('#idcardModule').remove();
+                    $('#addressModule').remove();
+                }
+            }, 'json');
+            $.post('memberAction_getRegCount', function (result) {
+                if (result.counts > 0) {
+                    if ($('#temp').val() == '审批' && $('#tempLevel').val() == '系统管理员') {
+                        $('#dot').append("<span class='layui-badge layui-bg-red'>" + result.counts + "</span>");
+                    }
+                }
+            }, 'json');
+            element.on('nav(nav)', function (elem) {
+                elem.find("span[id='thisDot']").next().remove();
+            });
+            $('#11').on('click', function () {
+                layer.open({
+                    type: 1,
+                    content: $('#fm'),
+                    area: ['550px', '550px'],
+                    title: '用户信息',
+                    success: function (layero, index) {
+                        form.on('submit(updateMemberInfo)', function (data) {
+                            var url = "memberAction_updateMemberInfo";
+                            if ($('#temp_editInfoRead').val() == 0) {
+                                url = url + "?editInfoRead=1";
+                            }
+                            $.ajax({
+                                async: true,
+                                dataType: 'json',
+                                contentType: 'application/json',
+                                url: url,
+                                data: data.field,
+                                success: function (result) {
+                                    if (result.success) {
+                                        layer.msg('修改成功', {icon: 6, time: 1000});
+                                        $('#edit_memberName').val(result.name);
+                                        $('#edit_sex').val(result.sex);
+                                        $('#edit_phone').val(result.phone);
+                                        $('#edit_address').val(result.address);
+                                        $("#edit_idCard").val(result.idCard);
+                                        form.render('select', 'fm');
+                                        layer.close(index);
+                                    } else {
+                                        layer.msg(result.errMsg, {icon: 5, time: 1000});
+                                    }
+                                }
+                            });
+                        });
+                    }
+                });
+            });
+            $('#saveSetting').on('click', function () {
+                layer.open({
+                    title: '修改密码',
+                    type: 1,
+                    content: $("#saveContent"),
+                    area: ["360px", "360px"],
+                    success: function (layero, index) {
+                        form.on('submit(updatePwd)', function (data) {
+                            var newPassword = $("#saveContent").find("input[name='newPassword']").val();
+                            var repassword = $("#saveContent").find("input[name='repassword']").val();
+                            if (repassword != newPassword) {
+                                layer.msg("两次密码不一致", {icon: 5, time: 1000});
+                                return;
+                            }
+                            $.ajax({
+                                url: 'memberAction_updateMemberInfo?updateVersion=password',
+                                dataType: 'json',
+                                data: data.field,
+                                async: true,
+                                success: function (result) {
+                                    if (result.success) {
+                                        layer.msg('修改成功', {icon: 6, time: 1000});
+                                        layer.close(index);
+                                    } else {
+                                        layer.msg(result.errMsg, {icon: 5, time: 1000});
+                                    }
+                                }
+                            });
+                        });
+                    },
+                    end: function () {
+                        $("#saveContent").find("input[name='password']").val('');
+                        $("#saveContent").find("input[name='newPassword']").val('');
+                        $("#saveContent").find("input[name='repassword']").val('');
+                    }
+                });
+            });
+            var uploadOption = upload.render({
+                url: 'memberAction_updateImg?Math.random()*' + new Date(),
+                elem: '#uploadImg',
+                size: 10000000,
+                before: function (obj) {
+                    obj.preview(function (index, file, result) {
+                        $('#memberImg').attr('src', result);
+                    });
+                },
+                done: function (res, index, upload) {
+                    if (res.success) {
+                        layer.alert('上传成功', {icon: 6});
+                        $('#imgText').html('');
+                        document.getElementById("littleImg").src = 'memberAction_getMemberImage?Math.ramdom()*' + new Date();
+                        document.getElementById("bigImg").src = 'memberAction_getMemberImage?version=Math.random()*' + new Date();
+                        document.getElementById("memberImg").src = 'memberAction_getMemberImage?version=Math.random()*' + new Date();
+                    } else {
+                        layer.alert(res.errMsg, {icon: 5});
+                    }
+                },
+                error: function (index, upload) {
+                    $('#imgText').html("<span style='color:red;'>失败&nbsp;&nbsp;</span><button type='button' id='retry' class='layui-btn layui-btn-mini'>重试</button>");
+                    $('#retry').on('click', function () {
+                        uploadOption.upload();
+                    });
+                }
+            });
+        });
+
+        function reviewSp() {
+            var tempValue = $('#temp').val();
+            var tempLevel = $('#tempLevel').val();
+            if (tempValue == '未审批') {
+                layer.alert('当前审批未通过，您当前权限为注册未通过', {skin: 'layui-layer-lan'});
+            } else if (tempLevel == '考生') {
+                layer.alert('审批已通过,您当前身份为考生', {skin: 'layui-layer-lan'});
+            }
+        }
+    </script>
+</head>
+<body>
+<div class="layui-layout layui-layout-admin">
+    <div class="layui-header">
+        <div class="layui-logo"><span style="color: white;font-size:20px;">考试报名系统</span></div>
+        <ul class="layui-nav layui-layout-left" kit-navbar>
+            <li class="layui-nav-item">
+                <a href="#" kit-target data-options="{url:'main.html',icon:'&#xe68e',title:'首页',id:12}"><i
+                        class="layui-icon">&#xe68e;</i><span>首页</span></a>
+            </li>
+            <li class="layui-nav-item">
+                <a href="#"><i class="layui-icon">&#xe606;</i><span>联系我</span></a>
+            </li>
+        </ul>
+        <ul class="layui-nav layui-layout-right" kit-navbar>
+            <li class="layui-nav-item">
+                <a href="#" kit-target data-options="{id:6,url:'notice.html',title:'系统公告',icon:'&#xe645'}"><i
+                        class="layui-icon">&#xe645;</i><span>系统公告</span></a>
+            </li>
+            <li class="layui-nav-item">
+                <a href="#"><img id="littleImg" class="layui-nav-img"></a>
+                <dl class="layui-nav-child">
+                    <dd><a href="#" id="11" data-options="{id:11,title:'个人资料',icon:'&#xe658'}"><i
+                            class="layui-icon">&#xe705;</i><span>个人资料</span></a>
+                    </dd>
+                    <dd><a href="#" id="saveSetting"><i class="layui-icon">&#xe614;</i><span>安全设置</span></a></dd>
+                </dl>
+            </li>
+            <li class="layui-nav-item">
+                <a href="memberAction_logout"><span>登出</span><i class="layui-icon">&#xe602;</i></a>
+            </li>
+        </ul>
+    </div>
+    <div class="layui-side layui-bg-black">
+        <div class="layui-side-scroll">
+            <ul class="layui-nav layui-nav-tree layui-bg-black" kit-navbar id="tree" lay-filter="nav">
+                <li class="layui-nav-item">
+                    <div style="text-align:center;"><img id="bigImg"
+                                                         style="width:80px;height:80px;border-radius:50%;border:4px solid #44576B;">
+                    </div>
+                    <div style="text-align:center;" id="welWord"></div>
+                </li>
+                <li id="regModule" class="layui-nav-item layui-nav-itemed">
+                    <a href="#" kit-target data-options="{id:1,url:'regManage.html',title:'用户注册管理',icon:'&#xe620'}"
+                       id="dot"><i class="layui-icon">&#xe620;</i><span id="thisDot">&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;用户注册管理</span></a>
+                </li>
+                <li class="layui-nav-item">
+                    <a href="#"><i class="layui-icon">&#xe620;</i><span>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;系统管理</span></a>
+                    <dl class="layui-nav-child">
+                        <dd><a href="#" kit-target id="examLi"
+                               data-options="{id:2,title:'考试管理',icon:'&#xe631',url:'examManage.html'}"><i
+                                class="layui-icon">&#xe631;</i><span>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;考试管理</span></a>
+                        </dd>
+                        <dd>
+                            <a href="#" kit-target
+                               data-options="{id:3,title:'考试类别管理',icon:'&#xe631',url:'examTypeManage.html'}"><i
+                                    class="layui-icon">&#xe631;</i><span>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;考试类别管理</span></a>
+                        </dd>
+                    </dl>
+                </li>
+                <li class="layui-nav-item layui-nav-itemed">
+                    <a href="#" kit-target id="baomiLi"
+                       data-options="{id:4,title:'报名管理',icon:'&#xe620',url:'signUpManage.html'}"><i
+                            class="layui-icon">&#xe620;</i><span> &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;报名管理</span></a>
+                </li>
+                <li class="layui-nav-item">
+                    <a href="#" id="queryLi" kit-target
+                       data-options="{id:8,icon:'&#xe615',title:'用户报名查询',url:'searchSignUp.html'}"><i
+                            class="layui-icon">&#xe615;</i><span> &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;用户报名查询</span></a>
+                </li>
+                <li class="layui-nav-item">
+                    <a href="#" id="printLi" kit-target
+                       data-options="{id:9,icon:'&#xe61d',title:'准考证打印',url:'certificate.html'}"><i class="layui-icon">&#xe61d;</i><span> &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;准考证打印</span></a>
+                </li>
+                <li class="layui-nav-item">
+                    <a href="#" id="addUp" kit-target
+                       data-options="{id:18,icon:'&#xe629',title:'报名统计',url:'statistics.html'}"><i class="layui-icon">&#xe629;</i><span>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;报名统计</span></a>
+                </li>
+            </ul>
+        </div>
+    </div>
+    <div class="layui-body" id="container">
+        <div style="padding-top:15px;">内容正在加载中...</div>
+    </div>
+    <div class="layui-footer">
+        <div style="text-align:center;" id="footer">lyh-考试报名系统</div>
+    </div>
+</div>
+<div id="fm" style="display:none;">
+    <span style="display:block;width:109px;height:40px;border:1px solid #E6E6E6;text-align:center;line-height:2.5em;margin-top:5px;">个人头像</span>
+    <img id="memberImg"
+         style="border-radius:50%;width:100px;height:100px;border:4px solid #44576B;margin-top:5px;"
+    >
+    <p style="padding-left:18px;" id="imgText"></p>
+    <div id="uploadImgFa">
+        <button id="uploadImg" class="layui-btn layui-btn-normal" style="margin:5px 0px"><i
+                class="layui-icon">&#xe67c;</i><span>更换头像</span></button>
+    </div>
+    <form class="layui-form layui-form-pane" lay-filter="fm">
+        <div class="layui-form-item" id="edit_id">
+            <label class="layui-form-label">账号</label>
+            <div class="layui-input-inline">
+                <input class="layui-input layui-disabled" id="edit_memberId" name="edit_memberId" readonly="true">
+            </div>
+        </div>
+        <div class="layui-form-item" id="edit_name">
+            <label class="layui-form-label">姓名</label>
+            <div class="layui-input-inline">
+                <input class="layui-input" name="edit_memberName" id="edit_memberName" autocomplete="off"
+                       lay-verify="required">
+            </div>
+        </div>
+        <div class="layui-form-item" id="sexModule">
+            <label class="layui-form-label">性别</label>
+            <div class="layui-input-inline">
+                <select name="edit_sex" id="edit_sex" autocomplete="off" lay-verify="required">
+                    <option value="">性别...</option>
+                    <option value="0">男</option>
+                    <option value="1">女</option>
+                </select>
+            </div>
+        </div>
+        <div class="layui-form-item" id="phoneModule">
+            <label class="layui-form-label">手机号</label>
+            <div class="layui-input-inline">
+                <input class="layui-input" name="edit_phone" id="edit_phone" autocomplete="off"
+                       lay-verify="required|phone">
+            </div>
+        </div>
+        <div class="layui-form-item" id="idcardModule">
+            <label class="layui-form-label">身份证号</label>
+            <div class="layui-input-inline">
+                <input class="layui-input" name="edit_idCard" id="edit_idCard" autocomplete="off"
+                       lay-verify="required|identity">
+            </div>
+        </div>
+        <div class="layui-form-item" id="addressModule">
+            <label class="layui-form-label">地址</label>
+            <div class="layui-input-inline">
+                <input class="layui-input" name="edit_address" id="edit_address" autocomplete="off">
+            </div>
+        </div>
+        <div class="layui-form-item" id="edit_role">
+            <label class="layui-form-label">权限</label>
+            <div class="layui-input-inline">
+                <input class="layui-input layui-disabled" name="edit_Level" id="edit_Level" autocomplete="off"
+                       readonly="true">
+            </div>
+        </div>
+        <div style="margin-left:200px;">
+            <button class="layui-btn layui-btn-normal" id="submitBtn" type="button"
+                    lay-submit
+                    lay-filter="updateMemberInfo"><i class="layui-icon">&#xe618;</i><span>修改</span>
+            </button>
+        </div>
+    </form>
+</div>
+<input id='temp' style='display:none;' name='temp_approved'>
+<input id='tempLevel' style='display:none;' name='temp_level'>
+<input id="temp_editInfoRead" style='display:none;' name='temp_editInfoRead'>
+<div id="saveContent" style="display: none;padding:10px;">
+    <form class="layui-form layui-form-pane">
+        <div class="layui-form-item">
+            <lable class="layui-form-label">原密码</lable>
+            <div class="layui-input-inline">
+                <input class="layui-input" auto-complete="off" name="password" lay-verify="required">
+            </div>
+        </div>
+        <div class="layui-form-item">
+            <lable class="layui-form-label">新密码</lable>
+            <div class="layui-input-inline">
+                <input class="layui-input" auto-complete="off" name="newPassword" lay-verify="required">
+            </div>
+        </div>
+        <div class="layui-form-item">
+            <lable class="layui-form-label">确认新密码</lable>
+            <div class="layui-input-inline">
+                <input class="layui-input" name="repassword" lay-verify="required" auto-complete="off">
+            </div>
+        </div>
+        <div style="margin-left:30%;margin-top: 30px;">
+            <button type="button" class="layui-btn layui-btn-normal" lay-submit lay-filter="updatePwd"><i
+                    class="layui-icon">&#xe618;</i><span>修改</span></button>
+        </div>
+    </form>
+</div>
+</body>
+</html>

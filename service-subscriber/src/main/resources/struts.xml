@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE struts PUBLIC "-//Apache Software Foundation//DTD Struts Configuration 2.1//EN"
+        "http://struts.apache.org/dtds/struts-2.1.dtd">
+<struts>
+    <package name="default" namespace="/" extends="json-default,struts-default">
+        <interceptors>
+            <interceptor name="loginInteceptor" class="interceptor.loginInterceptor"/>
+            <interceptor-stack name="loginStack">
+                <interceptor-ref name="defaultStack"></interceptor-ref>
+                <interceptor-ref name="loginInteceptor">
+                    <param name="excludeMethods">login,getCodeImage</param>
+                </interceptor-ref>
+            </interceptor-stack>
+        </interceptors>
+        <default-interceptor-ref name="loginStack"/>
+        <global-results>
+            <result name="sessionTimeOut">/login.html</result>
+        </global-results>
+
+        <action name="memberAction_*" class="memberAction" method="{1}">
+            <result name="success" type="json">
+                <param name="contentType">text/json</param>
+                <param name="root">jb</param>
+            </result>
+            <result name="logoutSuccess">/login.html</result>
+        </action>
+        <action name="getCode" class="action.createImageCode" method="getCodeImage">
+            <result name="success" type="stream">
+                <param name="contentType">image/jpeg</param>
+                <param name="inputName">inputStream</param>
+            </result>
+        </action>
+        <action name="echarts_*" class="echartsAction" method="{1}">
+            <result name="success" type="json">
+                <param name="contentType">text/json</param>
+                <param name="root">jb</param>
+            </result>
+        </action>
+        <action name="adminOp_*" class="adminOperation" method="{1}">
+            <result name="success" type="json">
+                <param name="contentType">text/json</param>
+                <param name="root">jb</param>
+            </result>
+        </action>
+        <action name="examAction_*" class="examAction" method="{1}">
+            <result name="success" type="json">
+                <param name="contentType">text/json</param>
+                <param name="root">jb</param>
+            </result>
+        </action>
+        <action name="examTypeAction_*" class="examTypeAction" method="{1}">
+            <result name="success" type="json">
+                <param name="contentType">text/json</param>
+                <param name="root">jb</param>
+            </result>
+        </action>
+        <action name="stuAction_*" class="studentAction" method="{1}">
+            <result name="success" type="json">
+                <param name="contentType">text/json</param>
+                <param name="root">jb</param>
+            </result>
+        </action>
+        <action name="echars_*" class="echartsAction" method="{1}">
+            <result name="success" type="json">
+                <param name="contentType">text/json</param>
+                <param name="root">jb</param>
+            </result>
+        </action>
+        <action name="excel_*" class="excelAction" method="{1}"/>
+    </package>
+    <constant name="struts.i18n.encoding" value="utf-8"></constant>
+    <constant name="struts.multipart.maxSize" value="10000000"></constant>
+</struts>

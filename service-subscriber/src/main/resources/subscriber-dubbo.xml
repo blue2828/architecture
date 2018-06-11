@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:dubbo="http://code.alibabatech.com/schema/dubbo"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+       http://www.springframework.org/schema/beans/spring-beans.xsd
+       http://code.alibabatech.com/schema/dubbo
+       http://code.alibabatech.com/schema/dubbo/dubbo.xsd">
+    <dubbo:application name="arche-subscriber" owner="programmer" organization="dubbox"/>
+    <dubbo:registry address="zookeeper://localhost:2181" timeout="60000" />
+    <dubbo:protocol name="dubbo" port="20880" payload="30343305"/>
+    <!--<dubbo:reference id="demoService" interface="com.lyh.dubbo.demo.service.IDemoService"/>-->
+    <dubbo:reference id="adminOpService" interface="service.IAdminOpService" protocol="dubbo"/>
+    <dubbo:reference id="echartsService" interface="service.IEchartsService" protocol="dubbo"/>
+    <dubbo:reference id="examService" interface="service.IExamService" timeout="6000" protocol="dubbo"/>
+    <dubbo:reference id="examTypeService" interface="service.IExamTypeService" timeout="6000" protocol="dubbo"/>
+    <dubbo:reference id="memberService" interface="service.IMemberService" timeout="6000" protocol="dubbo"/>
+    <dubbo:reference id="studentService" interface="service.IStudentService" timeout="6000" protocol="dubbo"/>
+</beans>
